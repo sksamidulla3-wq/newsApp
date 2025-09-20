@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:newsapp/model/api_model.dart';
 import 'package:newsapp/screens/searchBloc/search_bloc.dart';
+import 'package:newsapp/screens/secondpage.dart';
 
 class SearchScreen extends StatefulWidget {
   String query = "";
@@ -36,11 +37,9 @@ class _SearchScreenState extends State<SearchScreen> {
             ).add(SearchNewsEvent(query: searchController.text, page: page));
           } else {
             print("No more pages");
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text("No more pages"),
-              ),
-            );
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text("No more pages")));
           }
         }
       });
@@ -66,8 +65,11 @@ class _SearchScreenState extends State<SearchScreen> {
             totalPage = state.news.totalResults! % 15 == 0
                 ? state.news.totalResults! ~/ 15
                 : state.news.totalResults! ~/ 15 + 1;
-            contentsList = state.news.articles!;
-            contentsList.addAll(state.news.articles!);
+            if (page == 0) {
+              contentsList = state.news.articles!;
+            } else {
+              contentsList.addAll(state.news.articles!);
+            }
             setState(() {});
           }
           if (state is SearchLoading) {
@@ -81,26 +83,43 @@ class _SearchScreenState extends State<SearchScreen> {
             );
           }
         },
-        child: contentsList.isNotEmpty ? Expanded(child:
-            ListView.builder(
+        child: contentsList.isNotEmpty
+            ? ListView.builder(
                 controller: scrollController,
                 itemCount: contentsList.length,
-                itemBuilder: (ctx,index){
-              return Card(
-                child: ListTile(
-                  leading: contentsList[index].urlToImage != null &&
-                      contentsList[index].urlToImage!.isNotEmpty
-                      ? Image.network(
-                    contentsList[index].urlToImage!,
-                    width: 80,
-                    fit: BoxFit.cover,
-                    errorBuilder: (ctx, error, stack) => Icon(Icons.broken_image),
-                  )
-                      : Icon(Icons.image_not_supported
-                ),
-              ) );
-            })
-        ) : Center(child: CircularProgressIndicator()),
+                itemBuilder: (ctx, index) {
+                  return Card(
+                    child: ListTile(
+                      leading:
+                          contentsList[index].urlToImage != null &&
+                              contentsList[index].urlToImage!.isNotEmpty
+                          ? Image.network(
+                              contentsList[index].urlToImage!,
+                              width: 80,
+                              fit: BoxFit.cover,
+                              errorBuilder: (ctx, error, stack) =>
+                                  Icon(Icons.broken_image),
+                            )
+                          : Icon(Icons.image_not_supported),
+                      title: Text(contentsList[index].title ?? "No Title"),
+                      subtitle: Text(
+                        contentsList[index].description ?? "No Description",
+                      ),
+                      trailing: Icon(Icons.arrow_forward),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (ctx) =>
+                                SecondScreen(contentModel: contentsList[index]),
+                          ),
+                        );
+                      },
+                    ),
+                  );
+                },
+              )
+            : Center(child: CircularProgressIndicator()),
       ),
     );
   }
